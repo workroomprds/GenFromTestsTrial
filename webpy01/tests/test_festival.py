@@ -1,5 +1,5 @@
-from src.festival import festival
-from src.festival import FESTIVAL_WESTERN
+from src.python.festival import festival
+from src.python.festival import FESTIVAL_WESTERN
 
 from datetime import date
 import pytest

@@ -1,4 +1,4 @@
-from src.routeFinder import findRoute, makep2p
+from src.python.routeFinder import findRoute, makep2p
 import pytest
 
 
