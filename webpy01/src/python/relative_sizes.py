@@ -103,3 +103,5 @@ class RelativeSizes:
         target_name = target_unit['plural'] if abs(target_value) != 1 else target_unit['name']
 
         return f"{source_str} {source_name} is {target_str} {target_name}"
+
+relative_sizes = RelativeSizes()
