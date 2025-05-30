@@ -94,7 +94,7 @@ replaceSourceWithGeneratedCode() { ## parameter 1 is new_conversation
             echo "Continuing conversation"
         fi
         
-        echo "Attempting to generate new code with LLM"
+        echo "Attempting to generate new code with "$LLM_MODEL""
         llm -t $LLM_TEMPLATE \
                 $llmModelParameter \
                 -p code "$code_contents" \
