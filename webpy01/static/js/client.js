@@ -1,7 +1,7 @@
 // static/js/client.js
 document.addEventListener('DOMContentLoaded', async function() {
     // Fetch configuration from backend
-    const configResponse = await fetch('/api/config');
+    const configResponse = await fetch('./api/config');
     const config = await configResponse.json();
     
     // Elements
@@ -72,7 +72,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         state.inputValue = value;
         
         try {
-            const response = await fetch('/api/convert', {
+            const response = await fetch('./api/convert', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
