@@ -68,7 +68,7 @@ exitIfTestsPassFirstTime() {
 # run tests / checks and handle results
 checkCode() {
         echo "Running tests (checks) from $test_file"
-        test_results="$(pytest --cov --quiet --tb=line "$test_file")"
+        test_results="$(pytest --quiet --tb=line "$test_file"  --cov="$SOURCE_FILE_PREFIX")"
         pytest_exit_code=$?
         echo "Pytest exited with: $pytest_exit_code"
         if [ $pytest_exit_code -eq 0 ]; then
