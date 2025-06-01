@@ -107,10 +107,10 @@ replaceSourceWithGeneratedCode() { ## parameter 1 is new_conversation
                 > "$source_file"
         llm_exit_code=$?
         if [ $llm_exit_code -eq 0 ]; then
-                echo "LLM generated a new $source_file. Passing over to tests in $test_file"
+                echo "$LLM_MODEL generated a new $source_file. Passing over to tests in $test_file"
                 return 0
         else
-                echo "LLM failed to generate new code with error code $llm_exit_code – consider restoring source from change control"
+                echo "$LLM_MODEL failed to generate new code with error code $llm_exit_code – consider restoring source from change control"
                 return 1
         fi
 }
@@ -118,7 +118,7 @@ replaceSourceWithGeneratedCode() { ## parameter 1 is new_conversation
 # commit changes if new code passes tests
 commit_changes() {
         echo "Attempting to commit changes" 
-        commitMessage="AI generated changes to $source_file to pass tests in $test_file"
+        commitMessage="$LLM_MODEL generated changes to $source_file to pass tests in $test_file"
 
         git add "$source_file" "$test_file" && git commit -m "$commitMessage"
         gitStatus=$?
