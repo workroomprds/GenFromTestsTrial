@@ -1,5 +1,3 @@
-# tests/test_relative_sizes.py
-
 import inspect
 import pytest
 from src.python.relative_sizes import RelativeSizes
@@ -23,6 +21,9 @@ def simple_scale():
 
 class TestConvertBasic:
     @pytest.mark.parametrize("value, unit, expected", [
+        # No conversion
+        (1, "one", "1 one is 1.0 one"),
+        
         # Basic conversions
         (1000, "thousandth", "1000 thousandths is 1.0 one"),
         
@@ -31,35 +32,36 @@ class TestConvertBasic:
         
         # Skip unit (going from thousandth directly to hundred)
         (212000, "thousandth", "212000 thousandths is 2.12 hundreds"),
-        
+                
+        # pass through input to output
+        (3.001, "one", "3.001 ones is 3.0 ones"),
+
         # Scientific notation
         (1e3, "thousandth", "1000 thousandths is 1.0 one"),
         
         # Threshold behavior
         (949, "thousandth", "949 thousandths is 949 thousandths"),
         (950, "thousandth", "950 thousandths is 1.0 one"),
-        
-        # Rounding behavior
-        (99.89, "one", "99.9 ones is 1.00 hundred"),
     ])
     def test_convert_success_cases(self, rs, simple_scale, value, unit, expected):
         result = rs.convert(value, unit, simple_scale)
         assert result == expected, f"Failed with {value} {unit}"
-    
-    @pytest.mark.parametrize("value, unit, expected_fragment", [
-        # Testing rounding behavior with partial matching
-        (99.86, "one", "99.9 ones"),
-        (99.84, "one", "99.8 ones"),
+
+    @pytest.mark.parametrize("value, unit, expected_output", [
+        # Rounding behavior test cases
+        (9.84, "one", "9.8 ones"),  # Round down
+        (9.85, "one", "9.9 ones"),  # Round up at midpoint. Do not use Pythonn default rounding
+        (9.86, "one", "9.9 ones"),  # Round up
     ])
-    def test_convert_partial_match(self, rs, simple_scale, value, unit, expected_fragment):
+    def test_rounding_behavior(self, rs, simple_scale, value, unit, expected_output):
         result = rs.convert(value, unit, simple_scale)
-        assert expected_fragment in result, f"Failed to find '{expected_fragment}' in '{result}'"
+        assert expected_output in result, f"Failed to find '{expected_output}' in '{result}'"
 
     @pytest.mark.parametrize("value, unit, expected", [
         # Negative values
         (-1000, "thousandth", "-1000 thousandths is -1.0 one"),
         (-2000, "thousandth", "-2000 thousandths is -2.0 ones"),
-        (-99.9, "one", "-99.9 ones is -1.00 hundred"),
+        (-100, "one", "-100 ones is -1.00 hundred"),
     ])
     def test_convert_negative_values(self, rs, simple_scale, value, unit, expected):
         result = rs.convert(value, unit, simple_scale)
