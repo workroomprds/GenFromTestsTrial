@@ -114,9 +114,9 @@ class TestRelativeSizesSignature:
             params = list(sig.parameters.keys())
             assert params == expected_params, f"Method {method_name} has incorrect parameters"
     
-    def test_import_relative_sizes(self):
+    def test_import_relative_sizes(self): # the rest of the system expects a module-level singleton pattern providing a convenience API to allow users to directly import and use a pre-configured instance without initialization boilerplate.
         """Test that relative_sizes can be imported."""
-        try:
+        try: 
             from src.python.relative_sizes import relative_sizes
             # If import succeeds, check that it's the right type
             from src.python.relative_sizes import RelativeSizes
