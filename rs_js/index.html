@@ -55,6 +55,36 @@
     </div>
 
     <script type="module" src="src/js/integrator.js"></script>
+		<script>
+			document.addEventListener('DOMContentLoaded', function() {
+				function getUserName() {
+				  // Extract username from path
+				  const path = window.location.pathname;
+				  const pathSegments = path.split('/').filter(segment => segment);
+  				return pathSegments[0]
+				}
+				function getGroup() {
+				  const hostname = window.location.hostname;
+				  const domainParts = hostname.split('.');
+				  const baseDomain = domainParts.slice(-2).join('.');
+				  return hostname.slice(0, hostname.length - baseDomain.length - 1);
+				}
+				
+				let group4t = getGroup();
+				let user4t = getUserName();
+
+  			let oldTitle4t = document.title;
+			  // Update title
+			  document.title = `${group4t} - ${user4t} | ${oldTitle4t}`;
+  
+			  // Update H1
+			  const h1_ = document.querySelector('h1');
+			  if (h1_) {
+			    h1_.textContent = `${group4t} - ${user4t} ${h1_.textContent}`;
+			  }
+			});
+		</script>
+		
 
 </body>
 
