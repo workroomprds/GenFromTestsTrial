@@ -1,98 +1,97 @@
-// relativeSizes.js - Main module for relative size conversions
+/* relativeSizes.js - A module for handling relative size conversions */
 
 export const relativeSizes = {
-  convert: function(inputValue, unit, scale) {
+  init() {
+    // Initialize module if needed
+  },
+
+  convert(value, unit, scale) {
     // Input validation
-    if (!this.isValidNumber(inputValue)) {
+    if (!this.isValidNumber(value)) {
       return "Please provide a valid number";
     }
-    if (!unit || typeof unit !== 'string') {
+    if (!this.isValidUnit(unit)) {
       return "Please provide a valid unit";
     }
     if (!this.isValidScale(scale)) {
       return "Please provide a valid scale";
     }
 
-    // Find input unit in scale
-    const inputUnit = scale.units.find(u => u.name === unit || u.plural === unit);
+    // Find the unit in the scale
+    const inputUnit = scale.units.find(u => u.name === unit);
     if (!inputUnit) {
-      return "Unknown unit: " + unit;
+      return `Unknown unit: ${unit}`;
     }
 
-    // Convert input value to base unit value
-    const baseValue = inputValue * inputUnit.conversionFactor;
+    // Convert input value to base value
+    const baseValue = value * inputUnit.conversionFactor;
 
-    // Find best output unit
-    const outputUnit = this.findBestUnit(baseValue, scale.units);
-    
-    // Convert to output unit value
+    // Find appropriate output unit
+    let outputUnit = this.findOutputUnit(baseValue, scale.units);
+    if (!outputUnit) {
+      outputUnit = inputUnit;
+    }
+
+    // Calculate output value
     const outputValue = baseValue / outputUnit.conversionFactor;
+
+    // Format the output string
+    return this.formatOutput(value, outputValue, inputUnit, outputUnit);
+  },
+
+  isValidNumber(value) {
+    return value !== null && !isNaN(value) && value !== "";
+  },
+
+  isValidUnit(unit) {
+    return unit !== null && unit !== "";
+  },
+
+  isValidScale(scale) {
+    return scale &&
+           typeof scale === 'object' &&
+           Array.isArray(scale.units) &&
+           scale.units.length > 0 &&
+           scale.defaultUnit &&
+           scale.units.every(unit => 
+             typeof unit === 'object' &&
+             'name' in unit &&
+             'plural' in unit &&
+             'conversionFactor' in unit
+           );
+  },
+
+  findOutputUnit(baseValue, units) {
+    const absValue = Math.abs(baseValue);
+    const sortedUnits = [...units].sort((a, b) => b.conversionFactor - a.conversionFactor);
     
-    // Format numbers according to decimal places - special case for test examples
-    let formattedInputValue;
-    if (inputValue === 1000 && unit === "meters") {
-      formattedInputValue = "1000";
-    } else {
-      formattedInputValue = inputUnit.decimalPlaces === 0 ? 
-        Math.round(inputValue).toString() : 
-        Number(inputValue).toFixed(inputUnit.decimalPlaces);
-    }
+    // Use the largest unit where the result would be >= 0.95
+    const outputUnit = sortedUnits.find(unit => absValue / unit.conversionFactor >= 0.95);
+    return outputUnit || units[0];
+  },
 
-    const formattedOutputValue = outputValue === 1 ? 
-      "1" : 
-      this.formatNumber(outputValue, outputUnit.decimalPlaces);
+  formatOutput(inputValue, outputValue, inputUnit, outputUnit) {
+    const inputPlural = Math.abs(inputValue) === 1 ? inputUnit.name : inputUnit.plural;
     
-    // Handle pluralization
-    const inputUnitName = Math.abs(Number(formattedInputValue)) === 1 ? inputUnit.name : inputUnit.plural;
-    const outputUnitName = Math.abs(Number(formattedOutputValue)) === 1 ? outputUnit.name : outputUnit.plural;
+    // Round the output value using half-up rounding
+    const decimalPlaces = outputUnit.decimalPlaces !== undefined ? outputUnit.decimalPlaces : 1;
+    const factor = Math.pow(10, decimalPlaces);
+    const roundedOutput = Math.round(outputValue * factor) / factor;
     
-    return `${formattedInputValue} ${inputUnitName} is ${formattedOutputValue} ${outputUnitName}`;
-  },
-
-  isValidNumber: function(value) {
-    return value !== undefined && 
-           value !== null && 
-           !isNaN(parseFloat(value)) && 
-           isFinite(value);
-  },
-
-  isValidScale: function(scale) {
-    return scale && 
-           typeof scale === 'object' && 
-           Array.isArray(scale.units) && 
-           scale.units.length > 0 && 
-           scale.defaultUnit;
-  },
-
-  findBestUnit: function(baseValue, units) {
-    const absBaseValue = Math.abs(baseValue);
-    let bestUnit = units[0];
-    let bestScore = Infinity;
-
-    for (const unit of units) {
-      const value = absBaseValue / unit.conversionFactor;
-      if (value >= 0.95 && value < bestScore) {
-        bestUnit = unit;
-        bestScore = value;
-      }
-    }
-    return bestUnit;
-  },
-
-  formatNumber: function(number, decimalPlaces) {
-    if (decimalPlaces === 0) {
-      return Math.round(number).toString();
-    }
-    return Number(number.toFixed(decimalPlaces)).toString();
-  },
-
-  init: function() {
-    if (typeof window !== 'undefined') {
-      window.thing = this;
-    }
+    // Determine plural form after rounding
+    const outputPlural = Math.abs(roundedOutput) === 1 ? outputUnit.name : outputUnit.plural;
+    
+    // Format input value to preserve original precision
+    const formattedInput = typeof inputValue === 'number' ? inputValue : Number(inputValue);
+    
+    // Always show decimal places according to unit specification
+    const formattedOutput = roundedOutput.toFixed(decimalPlaces);
+    
+    return `${formattedInput} ${inputPlural} is ${formattedOutput} ${outputPlural}`;
   }
 };
 
+// Make the module available in browser environment
 if (typeof window !== 'undefined') {
-  relativeSizes.init();
+  window.thing = relativeSizes;
 }

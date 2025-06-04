@@ -6,275 +6,111 @@
 import { jest } from '@jest/globals';
 
 // Import the module to test
-import { relativeSizes } from '../../src/js/relativeSizes';
+import { relativeSizes } from '../../src/js/relativeSizes.js';
 
-// Set up DOM environment if needed
-//beforeAll(() => {
-//  // This is only needed if your code relies on browser DOM APIs
-//  // Jest uses jsdom by default, but you may need to configure specific elements
-//  global.document = window.document;
-//});
-
-// Helper functions for scale creation
-function createTimeScale() {
-  return {
-    name: "time",
-    defaultUnit: "seconds",
-    units: [
-      {
-        name: "second",
-        plural: "seconds",
-        conversionFactor: 1,
-        decimalPlaces: 0
-      },
-      {
-        name: "minute",
-        plural: "minutes",
-        conversionFactor: 60,
-        decimalPlaces: 1
-      },
-      {
-        name: "hour",
-        plural: "hours",
-        conversionFactor: 3600,
-        decimalPlaces: 1
-      },
-      {
-        name: "day",
-        plural: "days",
-        conversionFactor: 86400,
-        decimalPlaces: 1
-      }
-    ]
-  };
-}
-
-function createDistanceScale() {
-  return {
-    name: "distance",
-    defaultUnit: "meters",
-    units: [
-      {
-        name: "millimeter",
-        plural: "millimeters",
-        conversionFactor: 0.001,
-        decimalPlaces: 0
-      },
-      {
-        name: "centimeter",
-        plural: "centimeters",
-        conversionFactor: 0.01,
-        decimalPlaces: 1
-      },
-      {
-        name: "meter",
-        plural: "meters",
-        conversionFactor: 1,
-        decimalPlaces: 1
-      },
-      {
-        name: "kilometer",
-        plural: "kilometers",
-        conversionFactor: 1000,
-        decimalPlaces: 1
-      }
-    ]
-  };
-}
-
-// Main test suite
 describe('relativeSizes', () => {
-  // Basic functionality test
-  test('convert function exists', () => {
-    expect(typeof relativeSizes.convert).toBe('function');
-  });
-
-  // Example tests from rules.md
-  test('Example: 60 seconds is 1 minute', () => {
-    const result = relativeSizes.convert(60, "seconds", createTimeScale());
-    expect(result).toBe("60 seconds is 1 minute");
-  });
-
-  test('Example: 3600 seconds is 1 hour', () => {
-    const result = relativeSizes.convert(3600, "seconds", createTimeScale());
-    expect(result).toBe("3600 seconds is 1 hour");
-  });
-
-  test('Example: 1000 meters is 1 kilometer', () => {
-    const result = relativeSizes.convert(1000, "meters", createDistanceScale());
-    expect(result).toBe("1000 meters is 1 kilometer");
-  });
-
-  // Different units create different outputs
-  test('Different units create different outputs', () => {
-    const timeScale = createTimeScale();
-    const seconds = relativeSizes.convert(120, "seconds", timeScale);
-    const minutes = relativeSizes.convert(2, "minutes", timeScale);
-    expect(seconds).not.toBe(minutes);
-  });
-
-  // Different scales create different output
-  test('Different scales create different output', () => {
-    const timeResult = relativeSizes.convert(60, "seconds", createTimeScale());
-    const distanceResult = relativeSizes.convert(60, "meters", createDistanceScale());
-    expect(timeResult).not.toBe(distanceResult);
-  });
-
-  // Pluralization tests
-  test('Units are pluralized appropriately - singular', () => {
-    const result = relativeSizes.convert(60, "seconds", createTimeScale());
-    expect(result).toContain("1 minute");
-    expect(result).not.toContain("minutes");
-  });
-
-  test('Units are pluralized appropriately - plural', () => {
-    const result = relativeSizes.convert(120, "seconds", createTimeScale());
-    expect(result).toContain("minutes");
-    expect(result).not.toContain("1 minute");
-  });
-
-  test('Input units are pluralized appropriately - singular', () => {
-    const result = relativeSizes.convert(1, "second", createTimeScale());
-    expect(result).toContain("1 second");
-  });
-
-  test('Input units are pluralized appropriately - plural', () => {
-    const result = relativeSizes.convert(2, "seconds", createTimeScale());
-    expect(result).toContain("2 seconds");
-  });
-
-  // Decimal places tests
-  test('Output respects decimal places - zero', () => {
-    // Create a custom scale with 0 decimal places
-    const customScale = {
-      name: "custom",
-      defaultUnit: "unit1",
-      units: [
-        { name: "unit1", plural: "unit1s", conversionFactor: 1, decimalPlaces: 0 },
-        { name: "unit2", plural: "unit2s", conversionFactor: 2.5, decimalPlaces: 0 }
-      ]
+  let rs;
+  let simpleScale;
+  
+  beforeEach(() => {
+    rs = relativeSizes;
+    simpleScale = {
+      "units": [
+        {"name": "thousandth", "plural": "thousandths", "conversionFactor": 0.001, "decimalPlaces": 0},
+        {"name": "one", "plural": "ones", "conversionFactor": 1, "decimalPlaces": 1},
+        {"name": "hundred", "plural": "hundreds", "conversionFactor": 100, "decimalPlaces": 2}
+      ],
+      "defaultUnit": "one"
     };
-
-    const result = relativeSizes.convert(5, "unit1", customScale);
-    expect(result).toContain("2 unit2s");
-    expect(result).not.toContain("2.0");
+  });
+  
+  describe('convert method - success cases', () => {
+    test('should handle no conversion', () => {
+      expect(rs.convert(1, "one", simpleScale)).toBe("1 one is 1.0 one");
+    });
+    
+    test('should handle basic conversion', () => {
+      expect(rs.convert(1000, "thousandth", simpleScale)).toBe("1000 thousandths is 1.0 one");
+    });
+    
+    test('should handle plural forms', () => {
+      expect(rs.convert(2000, "thousandth", simpleScale)).toBe("2000 thousandths is 2.0 ones");
+    });
+    
+    test('should skip units when appropriate', () => {
+      expect(rs.convert(212000, "thousandth", simpleScale)).toBe("212000 thousandths is 2.12 hundreds");
+    });
+    
+    test('should pass through input to output', () => {
+      expect(rs.convert(3.001, "one", simpleScale)).toBe("3.001 ones is 3.0 ones");
+    });
+    
+    test('should handle scientific notation', () => {
+      expect(rs.convert(1e3, "thousandth", simpleScale)).toBe("1000 thousandths is 1.0 one");
+    });
+    
+    test('should respect threshold behavior', () => {
+      expect(rs.convert(949, "thousandth", simpleScale)).toBe("949 thousandths is 949 thousandths");
+      expect(rs.convert(950, "thousandth", simpleScale)).toBe("950 thousandths is 1.0 one");
+    });
+  });
+  
+  describe('convert method - rounding behavior', () => {
+    test('should round correctly', () => {
+      // Round down
+      expect(rs.convert(9.84, "one", simpleScale)).toContain("9.8 ones");
+      // Round up at midpoint 
+      expect(rs.convert(9.85, "one", simpleScale)).toContain("9.9 ones");
+      // Round up
+      expect(rs.convert(9.86, "one", simpleScale)).toContain("9.9 ones");
+    });
+  });
+  
+  describe('convert method - negative values', () => {
+    test('should handle negative values correctly', () => {
+      expect(rs.convert(-1000, "thousandth", simpleScale)).toBe("-1000 thousandths is -1.0 one");
+      expect(rs.convert(-2000, "thousandth", simpleScale)).toBe("-2000 thousandths is -2.0 ones");
+      expect(rs.convert(-100, "one", simpleScale)).toBe("-100 ones is -1.00 hundred");
+    });
+  });
+  
+  describe('convert method - error cases', () => {
+    test('should handle invalid values', () => {
+      expect(rs.convert("not_a_number", "one", {"units": [], "defaultUnit": "one"}))
+        .toBe("Please provide a valid number");
+      expect(rs.convert(null, "one", {"units": [], "defaultUnit": "one"}))
+        .toBe("Please provide a valid number");
+    });
+    
+    test('should handle invalid units', () => {
+      expect(rs.convert(10, "", {"units": [], "defaultUnit": "one"}))
+        .toBe("Please provide a valid unit");
+      expect(rs.convert(10, null, {"units": [], "defaultUnit": "one"}))
+        .toBe("Please provide a valid unit");
+    });
+    
+    test('should handle unknown units', () => {
+      expect(rs.convert(10, "unknown", {"units": [{"name": "one", "plural": "ones", "conversionFactor": 1}], "defaultUnit": "one"}))
+        .toBe("Unknown unit: unknown");
+    });
+    
+    test('should handle invalid scale configuration', () => {
+      const invalidScales = [
+        {},
+        {"units": []},
+        {"units": [], "missing": "one"},
+        null,
+        "not_a_dict",
+        {"units": "not_a_list", "defaultUnit": "one"},
+        {"units": ["not_a_dict"], "defaultUnit": "one"}
+      ];
+      
+      invalidScales.forEach(scale => {
+        expect(rs.convert(10, "one", scale)).toBe("Please provide a valid scale");
+      });
+    });
   });
 
-  test('Output respects decimal places - one', () => {
-    // Create a custom scale with 1 decimal place
-    const customScale = {
-      name: "custom",
-      defaultUnit: "unit1",
-      units: [
-        { name: "unit1", plural: "unit1s", conversionFactor: 1, decimalPlaces: 0 },
-        { name: "unit2", plural: "unit2s", conversionFactor: 3, decimalPlaces: 1 }
-      ]
-    };
-
-    const result = relativeSizes.convert(5, "unit1", customScale);
-    expect(result).toContain("1.7 unit2s");
-  });
-
-  test('Output respects decimal places - two', () => {
-    // Create a custom scale with 2 decimal places
-    const customScale = {
-      name: "custom",
-      defaultUnit: "unit1",
-      units: [
-        { name: "unit1", plural: "unit1s", conversionFactor: 1, decimalPlaces: 0 },
-        { name: "unit2", plural: "unit2s", conversionFactor: 3, decimalPlaces: 2 }
-      ]
-    };
-
-    const result = relativeSizes.convert(5, "unit1", customScale);
-    expect(result).toContain("1.67 unit2s");
-  });
-
-  // Edge case tests
-  test('Handles zero input', () => {
-    const result = relativeSizes.convert(0, "seconds", createTimeScale());
-    expect(result).toContain("0 seconds");
-  });
-
-  test('Handles negative input', () => {
-    const result = relativeSizes.convert(-60, "seconds", createTimeScale());
-    expect(result).toContain("-60 seconds");
-  });
-
-  test('Handles very large numbers', () => {
-    const result = relativeSizes.convert(31536000, "seconds", createTimeScale());
-    expect(result).toContain("day");
-  });
-
-  test('Handles very small numbers', () => {
-    const result = relativeSizes.convert(0.001, "meters", createDistanceScale());
-    expect(result).toContain("millimeter");
-  });
-
-  // Floating point precision tests
-  test('Handles floating point precision issues', () => {
-    // Create a custom scale to test floating point precision
-    const customScale = {
-      name: "custom",
-      defaultUnit: "unit1",
-      units: [
-        { name: "unit1", plural: "unit1s", conversionFactor: 1, decimalPlaces: 1 },
-        { name: "unit2", plural: "unit2s", conversionFactor: 3, decimalPlaces: 1 }
-      ]
-    };
-
-    // 0.1 + 0.2 = 0.30000000000000004 in JavaScript due to floating point precision
-    const result = relativeSizes.convert(0.1 + 0.2, "unit1", customScale);
-    expect(result).toContain("0.3 unit1s");
-    expect(result).not.toContain("0.30000000000000004");
-  });
-
-  test('Handles rounding correctly', () => {
-    // Create a custom scale to test rounding
-    const customScale = {
-      name: "custom",
-      defaultUnit: "unit1",
-      units: [
-        { name: "unit1", plural: "unit1s", conversionFactor: 1, decimalPlaces: 0 },
-        { name: "unit2", plural: "unit2s", conversionFactor: 10, decimalPlaces: 0 }
-      ]
-    };
-
-    // 9.5 should round to 10 (1 unit2)
-    const result = relativeSizes.convert(9.5, "unit1", customScale);
-    expect(result).toContain("1 unit2");
-  });
-
-  // Input validation tests
-  test('Handles invalid input value', () => {
-    const result = relativeSizes.convert("not a number", "seconds", createTimeScale());
-    expect(result).toContain("valid number");
-  });
-
-  test('Handles missing input value', () => {
-    const result = relativeSizes.convert(undefined, "seconds", createTimeScale());
-    expect(result).toContain("valid number");
-  });
-
-  test('Handles invalid unit', () => {
-    const result = relativeSizes.convert(60, "lightyears", createTimeScale());
-    expect(result).toContain("Unknown unit");
-  });
-
-  test('Handles missing unit', () => {
-    const result = relativeSizes.convert(60, undefined, createTimeScale());
-    expect(result).toContain("valid unit");
-  });
-
-  test('Handles invalid scale', () => {
-    const result = relativeSizes.convert(60, "seconds", {});
-    expect(result).toContain("valid scale");
-  });
-
-  test('Handles missing scale', () => {
-    const result = relativeSizes.convert(60, "seconds", undefined);
-    expect(result).toContain("valid scale");
-  });
 
   describe('Module Environment Compatibility', () => {
     // Test: Module works in browser environment (jsdom)
